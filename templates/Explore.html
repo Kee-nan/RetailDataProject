@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+</head>
+<body>
+    <h1> Retail Data Explore Dashboard</h1>
+    
+    <!-- Filter and Group By Form -->
+    <form method="POST" action="{{ url_for('explore') }}">
+        <label for="hshd_num">HSHD Number:</label>
+        <input type="text" name="hshd_num" id="hshd_num" value="{{ hshd_num_filter }}">
+        
+        <label for="group_by">Group By:</label>
+        <select name="group_by" id="group_by">
+            <option value="HSHD_NUM" {% if group_by == 'HSHD_NUM' %}selected{% endif %}>HSHD Number</option>
+            <option value="BASKET_NUM" {% if group_by == 'BASKET_NUM' %}selected{% endif %}>Basket Number</option>
+            <option value="PURCHASE" {% if group_by == 'PURCHASE' %}selected{% endif %}>Purchase</option>
+            <option value="PRODUCT_NUM" {% if group_by == 'PRODUCT_NUM' %}selected{% endif %}>Product Number</option>
+            <option value="DEPARTMENT" {% if group_by == 'DEPARTMENT' %}selected{% endif %}>Department</option>
+            <option value="COMMODITY" {% if group_by == 'COMMODITY' %}selected{% endif %}>Commodity</option>
+        </select>
+        
+        <button type="submit">Apply</button>
+    </form>
+    
+    <!-- Table displaying results -->
+    <table border="1">
+        <thead>
+            <tr>
+                <th>HSHD Number</th>
+                <th>Basket Number</th>
+                <th>Purchase</th>
+                <th>Product Number</th>
+                <th>Spend</th>
+                <th>Units</th>
+                <th>Store Region</th>
+                <th>Week Number</th>
+                <th>Year</th>
+                <th>Age Range</th>
+                <th>Marital Status</th>
+                <th>Income Range</th>
+                <th>Homeowner</th>
+                <th>Household Composition</th>
+                <th>Household Size</th>
+                <th>Children</th>
+                <th>Department</th>
+                <th>Commodity</th>
+                <th>Brand Type</th>
+                <th>Natural/Organic Flag</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for record in records %}
+                <tr>
+                    <td>{{ record['HSHD_NUM'] }}</td>
+                    <td>{{ record['BASKET_NUM'] }}</td>
+                    <td>{{ record['PURCHASE'] }}</td>
+                    <td>{{ record['PRODUCT_NUM'] }}</td>
+                    <td>{{ record['SPEND'] }}</td>
+                    <td>{{ record['UNITS'] }}</td>
+                    <td>{{ record['STORE_R'] }}</td>
+                    <td>{{ record['WEEK_NUM'] }}</td>
+                    <td>{{ record['YEAR'] }}</td>
+                    <td>{{ record['AGE_RANGE'] }}</td>
+                    <td>{{ record['MARITAL'] }}</td>
+                    <td>{{ record['INCOME_RANGE'] }}</td>
+                    <td>{{ record['HOMEOWNER'] }}</td>
+                    <td>{{ record['HSHD_COMPOSITION'] }}</td>
+                    <td>{{ record['HH_SIZE'] }}</td>
+                    <td>{{ record['CHILDREN'] }}</td>
+                    <td>{{ record['DEPARTMENT'] }}</td>
+                    <td>{{ record['COMMODITY'] }}</td>
+                    <td>{{ record['BRAND_TY'] }}</td>
+                    <td>{{ record['NATURAL_ORGANIC_FLAG'] }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <!-- Pagination -->
+    <div class="pagination">
+        {% if page > 1 %}
+          <a href="{{ url_for('explore', page=page-1, hshd_num=hshd_num_filter, group_by=group_by) }}">Previous</a>
+        {% endif %}
+        Page {{ page }} of {{ total_pages }}
+        {% if page < total_pages %}
+          <a href="{{ url_for('explore', page=page+1, hshd_num=hshd_num_filter, group_by=group_by) }}">Next</a>
+        {% endif %}
+      </div>
+      
+    
+</body>
+</html>
+
+
