@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 import pyodbc
 
 app = Flask(__name__)
@@ -18,6 +18,13 @@ conn_str = (
 
 def get_db_connection():
     return pyodbc.connect(conn_str)
+
+def query_db(query):
+    with pyodbc.connect(conn_str) as conn:
+        cursor = conn.cursor()
+        cursor.execute(query)
+        columns = [column[0] for column in cursor.description]
+        return [dict(zip(columns, row)) for row in cursor.fetchall()]
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -53,6 +60,28 @@ def index():
 @app.route('/grid')
 def grid():
     return render_template('dashboard.html')
+
+@app.route("/api/spending_over_time")
+def spending_over_time():
+    query = """
+        SELECT YEAR, WEEK_NUM, SUM(SPEND) AS total_spend
+        FROM transactions
+        GROUP BY YEAR, WEEK_NUM
+        ORDER BY YEAR, WEEK_NUM;
+    """
+    return jsonify(query_db(query))
+
+@app.route("/api/top_departments")
+def top_departments():
+    query = """
+        SELECT p.DEPARTMENT, SUM(t.SPEND) AS total_spend
+        FROM transactions t
+        JOIN products p ON t.PRODUCT_NUM = p.PRODUCT_NUM
+        GROUP BY p.DEPARTMENT
+        ORDER BY total_spend DESC
+        OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY;
+    """
+    return jsonify(query_db(query))
 
 if __name__ == '__main__':
     app.run(debug=True)
