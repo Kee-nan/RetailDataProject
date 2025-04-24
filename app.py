@@ -2,6 +2,8 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
 import pyodbc
 import pandas as pd
+import os
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 app.secret_key = 'secret_key_for_demo'  # Not secure, just for flash messages
@@ -21,6 +23,14 @@ conn_str = (
 # Function to connect to database
 def get_db_connection():
     return pyodbc.connect(conn_str)
+
+ALLOWED_EXTENSIONS = {'xlsx', 'csv'}    
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+if not os.path.exists('uploads'):
+    os.makedirs('uploads')
 
 #Route for login and account creation page
 @app.route('/', methods=['GET', 'POST'])
@@ -154,13 +164,100 @@ def explore():
     total_pages = (total_records // per_page) + (1 if total_records % per_page > 0 else 0)
 
     return render_template(
-        'Explore.html',
+        'explore.html',
         records=records,
         hshd_num_filter=hshd_num_filter,
         group_by=group_by,
         page=page,
         total_pages=total_pages
     )
+
+@app.route('/upload', methods=['GET', 'POST'])
+def upload():
+    if request.method == 'POST':
+        table_primary_keys = {
+            'Households': 'HSHD_NUM',
+            'Products': 'PRODUCT_NUM',
+            'Transactions': None  # Assumes no primary key enforcement
+        }
+
+        for table in ['Transactions', 'Households', 'Products']:
+            file = request.files.get(table.lower())
+            if file and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                filepath = os.path.join('uploads', filename)
+                file.save(filepath)
+
+                # Load Excel or CSV into DataFrame
+                if filename.lower().endswith('.csv'):
+                    df = pd.read_csv(filepath)
+                else:
+                    df = pd.read_excel(filepath)
+
+                # Clean up column names: strip whitespace and replace spaces with underscores
+                df.columns = df.columns.str.strip().str.replace(' ', '_')
+
+                # Debug: Print column names to verify they match what we expect
+                print(f"Columns in {table}: {df.columns.tolist()}")
+
+                # Convert 'L' column in Households from Y/N to 1/0
+                if table == 'Households' and 'L' in df.columns:
+                    df['L'] = df['L'].map({'Y': 1, 'N': 0})
+
+                conn = get_db_connection()
+                cursor = conn.cursor()
+
+                primary_key = table_primary_keys[table]
+                inserted_count = 0
+                updated_count = 0
+
+                for _, row in df.iterrows():
+                    data = tuple(row)
+                    columns = list(row.index)
+
+                    if primary_key:
+                        if primary_key not in row:
+                            flash(f"Missing primary key '{primary_key}' in the uploaded data.")
+                            return redirect(url_for('upload'))
+
+                        pk_value = row[primary_key]
+                        # Check if record exists
+                        cursor.execute(f"SELECT COUNT(*) FROM {table} WHERE {primary_key} = ?", pk_value)
+                        exists = cursor.fetchone()[0] > 0
+
+                        if exists:
+                            # Build update SQL
+                            set_clause = ', '.join([f"{col} = ?" for col in columns if col != primary_key])
+                            update_values = [row[col] for col in columns if col != primary_key]
+                            update_values.append(pk_value)
+                            sql = f"UPDATE {table} SET {set_clause} WHERE {primary_key} = ?"
+                            cursor.execute(sql, update_values)
+                            updated_count += 1
+                        else:
+                            placeholders = ', '.join(['?'] * len(columns))
+                            sql = f"INSERT INTO {table} ({', '.join(columns)}) VALUES ({placeholders})"
+                            cursor.execute(sql, data)
+                            inserted_count += 1
+                    else:
+                        # No primary key — just insert
+                        placeholders = ', '.join(['?'] * len(columns))
+                        sql = f"INSERT INTO {table} ({', '.join(columns)}) VALUES ({placeholders})"
+                        cursor.execute(sql, data)
+                        inserted_count += 1
+
+                conn.commit()
+                conn.close()
+
+                # Remove files from upload
+                if os.path.exists(filepath):
+                    os.remove(filepath)
+
+                flash(f"{table} upload complete. Inserted: {inserted_count}, Updated: {updated_count}")
+
+        return redirect(url_for('explore'))
+
+    return render_template('upload.html')
+
 
 #New routes here
 

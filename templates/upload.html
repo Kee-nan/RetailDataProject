@@ -1,0 +1,61 @@
+<!-- upload.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Upload Data</title>
+</head>
+<body>
+    <h1>Upload Household, Product, and Transaction Excel Files</h1>
+
+    <form method="POST" enctype="multipart/form-data">
+        <label><strong>Households File (.xlsx or .csv):</strong></label><br>
+        <input type="file" name="households"><br>
+        <small>Expected Fields:</small>
+        <ul>
+            <li>HSHD_NUM (PRIMARY KEY)</li>
+            <li>L</li>
+            <li>AGE_RANGE</li>
+            <li>MARITAL</li>
+            <li>INCOME_RANGE</li>
+            <li>HOMEOWNER</li>
+            <li>HSHD_COMPOSITION</li>
+            <li>HH_SIZE</li>
+            <li>CHILDREN</li>
+        </ul>
+
+        <label><strong>Products File (.xlsx or .csv):</strong></label><br>
+        <input type="file" name="products"><br>
+        <small>Expected Fields:</small>
+        <ul>
+            <li>PRODUCT_NUM (PRIMARY KEY)</li>
+            <li>DEPARTMENT</li>
+            <li>COMMODITY</li>
+            <li>BRAND_TY</li>
+            <li>NATURAL_ORGANIC_FLAG</li>
+        </ul>
+
+        <label><strong>Transactions File (.xlsx or .csv):</strong></label><br>
+        <input type="file" name="transactions"><br>
+        <small>Expected Fields:</small>
+        <ul>
+            <li>BASKET_NUM</li>
+            <li>HSHD_NUM</li>
+            <li>PURCHASE</li>
+            <li>PRODUCT_NUM</li>
+            <li>SPEND</li>
+            <li>UNITS</li>
+            <li>STORE_R</li>
+            <li>WEEK_NUM</li>
+            <li>YEAR</li>
+        </ul>
+
+        <button type="submit">Upload Files</button>
+    </form>
+
+    <a href="{{ url_for('explore') }}">Back to Dashboard</a>
+</body>
+</html>
+
+
+
