@@ -2,6 +2,11 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
 import pyodbc
 import pandas as pd
+from MachineLearning import churn_prediction, basket_analysis
+
+# Only run this once when app starts
+churn_prediction.main()
+basket_analysis.main()
 
 app = Flask(__name__)
 app.secret_key = 'secret_key_for_demo'  # Not secure, just for flash messages
@@ -163,7 +168,41 @@ def explore():
     )
 
 #New routes here
+@app.route("/ml-dashboard")
+def ml_dashboard():
+    # Load full churn data
+    churn_df_full = pd.read_csv("MachineLearning/at_risk_customers.csv")
 
+    # Filter high-risk for the table
+    churn_df_table = churn_df_full[churn_df_full["churn_prob"] > 0.75]
+
+    # Convert to dicts
+    churn_data = churn_df_table.to_dict(orient='records')
+    churn_chart_data = churn_df_full.to_dict(orient='records')
+	
+    # Load data
+    df = pd.read_csv("MachineLearning/commodity_correlations.csv")
+
+    # Add sorted pair column
+    df['pair'] = df.apply(
+        lambda row: tuple(sorted([row['Target_Commodity'], row['Predictor']])),
+        axis=1
+    )
+
+    # For each unique pair, keep row with max absolute coefficient
+    df['abs_coef'] = df['Coefficient'].abs()
+    dedup_df = df.loc[df.groupby('pair')['abs_coef'].idxmax()].drop(columns=['pair', 'abs_coef'])
+
+    # Sort again
+    dedup_df = dedup_df.sort_values(by='Coefficient', ascending=False)
+
+    # Convert to dict
+    basket_data = dedup_df.to_dict(orient='records')
+
+    return render_template("ML-dashboard.html",
+                       churn_data=churn_data,
+                       churn_chart_data=churn_chart_data,
+                       basket_data=basket_data)
 
 #Must be at the bottom
 if __name__ == '__main__':
