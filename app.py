@@ -19,12 +19,6 @@ conn_str = (
 def get_db_connection():
     return pyodbc.connect(conn_str)
 
-def query_db(query):
-    with pyodbc.connect(conn_str) as conn:
-        cursor = conn.cursor()
-        cursor.execute(query)
-        columns = [column[0] for column in cursor.description]
-        return [dict(zip(columns, row)) for row in cursor.fetchall()]
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -61,6 +55,15 @@ def index():
 def grid():
     return render_template('dashboard.html')
 
+
+######################################## Dashboard ###############################################
+def query_db(query):
+    with pyodbc.connect(conn_str) as conn:
+        cursor = conn.cursor()
+        cursor.execute(query)
+        columns = [column[0] for column in cursor.description]
+        return [dict(zip(columns, row)) for row in cursor.fetchall()]
+
 @app.route("/api/spending_over_time")
 def spending_over_time():
     query = """
@@ -82,6 +85,32 @@ def top_departments():
         OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY;
     """
     return jsonify(query_db(query))
+
+@app.route("/api/active_households")
+def active_households():
+    query = """
+        SELECT YEAR, WEEK_NUM, COUNT(DISTINCT HSHD_NUM) AS active_households
+        FROM transactions
+        GROUP BY YEAR, WEEK_NUM
+        ORDER BY YEAR, WEEK_NUM;
+    """
+    return jsonify(query_db(query))
+
+@app.route("/api/avg_spend_per_household")
+def avg_spend_per_household():
+    query = """
+        SELECT YEAR, WEEK_NUM, AVG(weekly_spend) AS avg_spend
+        FROM (
+            SELECT YEAR, WEEK_NUM, HSHD_NUM, SUM(SPEND) AS weekly_spend
+            FROM transactions
+            GROUP BY YEAR, WEEK_NUM, HSHD_NUM
+        ) AS household_weekly
+        GROUP BY YEAR, WEEK_NUM
+        ORDER BY YEAR, WEEK_NUM;
+    """
+    return jsonify(query_db(query))
+
+################################################################################################
 
 if __name__ == '__main__':
     app.run(debug=True)

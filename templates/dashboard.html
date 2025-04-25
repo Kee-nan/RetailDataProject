@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -12,23 +11,49 @@
             padding: 2rem;
             background: #f9f9f9;
         }
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr); /* Creates two equal-width columns */
+            grid-template-rows: repeat(2, 1fr);    /* Creates two equal-height rows */
+            gap: 2rem;                             /* Space between the grid items */
+        }
         .chart-container {
-            margin-bottom: 2rem;
+            background-color: white;
+            padding: 1rem;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .chart-container h3 {
+            text-align: center;
         }
     </style>
 </head>
 <body>
-    <h1>Customer Engagement Over Time</h1>
+    <h1 style="text-align: center;">Customer Engagement Over Time</h1>
 
-    <div class="chart-container">
-        <h3>Total Spend by Week</h3>
-        <div id="spend-chart" style="width: 100%; height: 400px;"></div>
-    </div>
+    <div class="grid-container">
+        <!-- First chart: Total Spend by Week -->
+        <div class="chart-container">
+            <h3>Total Spend by Week</h3>
+            <div id="spend-chart" style="width: 100%; height: 400px;"></div>
+        </div>
 
-    <div class="chart-container">
-        <h3>Top Departments by Spend</h3>
-        <div id="departments-chart" style="width: 100%; height: 400px;"></div>
+        <!-- Second chart: Top Departments by Spend -->
+        <div class="chart-container">
+            <h3>Top Departments by Spend</h3>
+            <div id="departments-chart" style="width: 100%; height: 400px;"></div>
+        </div>
+
+        <!-- Third chart: Active Households -->
+        <div class="chart-container">
+            <h3>Active Households</h3>
+            <div id="active-households-chart" style="width: 100%; height: 400px;"></div>
+        </div>
+
+        <!-- Fourth chart: Average Spend Per Household -->
+        <div class="chart-container">
+            <h3>Avg Spend Per Household</h3>
+            <div id="avg-spend-chart" style="width: 100%; height: 400px;"></div>
+        </div>
     </div>
 </body>
 </html>
-
