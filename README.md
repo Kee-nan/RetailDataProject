@@ -70,10 +70,3 @@ HSHD_NUM, BASKET_NUM, PRODUCT_NUM, SPEND, UNITS, STORE_R, YEAR, DEPARTMENT, NATU
 
 Data is stored in SQL Azure database and can be updated live via an Azure datapipeline by adding new
 CSV data to block storage it automatically updates the database.
-
----
-📊 Trend Analysis 
-
-
----
-📊 Machine Learning Analysis 
