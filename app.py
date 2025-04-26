@@ -370,4 +370,5 @@ def ml_dashboard():
 
 #Must be at the bottom
 if __name__ == '__main__':
-    app.run(debug=True)
+    #app.run(debug=True)  (LOCALLY RUN)
+    app.run(debug=True, host='0.0.0.0', port=8000) #(Published RUN)
