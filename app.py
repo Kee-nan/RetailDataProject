@@ -272,6 +272,11 @@ def query_db(query):
         cursor.execute(query)
         columns = [column[0] for column in cursor.description]
         return [dict(zip(columns, row)) for row in cursor.fetchall()]
+    
+@app.route('/dashboard')
+def about():
+    return render_template('about.html')
+
 
 @app.route("/api/spending_over_time")
 def spending_over_time():
