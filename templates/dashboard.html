@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Customer Engagement Dashboard</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="/static/dashboard.js" defer></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 2rem;
+            background: #f9f9f9;
+        }
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr); /* Creates two equal-width columns */
+            grid-template-rows: repeat(2, 1fr);    /* Creates two equal-height rows */
+            gap: 2rem;                             /* Space between the grid items */
+        }
+        .chart-container {
+            background-color: white;
+            padding: 1rem;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .chart-container h3 {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1 style="text-align: center;">Customer Engagement Over Time</h1>
+
+    <div class="grid-container">
+        <!-- First chart: Total Spend by Week -->
+        <div class="chart-container">
+            <h3>Total Spend by Week</h3>
+            <div id="spend-chart" style="width: 100%; height: 400px;"></div>
+        </div>
+
+        <!-- Second chart: Top Departments by Spend -->
+        <div class="chart-container">
+            <h3>Top Departments by Spend</h3>
+            <div id="departments-chart" style="width: 100%; height: 400px;"></div>
+        </div>
+
+        <!-- Third chart: Active Households -->
+        <div class="chart-container">
+            <h3>Active Households</h3>
+            <div id="active-households-chart" style="width: 100%; height: 400px;"></div>
+        </div>
+
+        <!-- Fourth chart: Average Spend Per Household -->
+        <div class="chart-container">
+            <h3>Avg Spend Per Household</h3>
+            <div id="avg-spend-chart" style="width: 100%; height: 400px;"></div>
+        </div>
+    </div>
+</body>
+<div style="margin-top: 30px; display: flex; justify-content: center;">
+    <div style="width: 50%; text-align: center; padding: 20px;">
+      <h2>Customer Engagement Summary</h2>
+        <p style="font-size: large;">
+        Based on the dashboard, customer engagement showed a slight overall decline over time. 
+        This is reflected in the "Active Households by Week" chart, where the number of active households 
+        gradually decreased from 2018 to 2020. Although the "Average Spend per Household" slightly increased 
+        during some periods (especially around mid-2020), the drop in total active households suggests that 
+        fewer customers were consistently shopping. This decline in participation, even with stable or slightly 
+        higher individual spending, indicates an overall reduction in engagement.
+        </p>
+  </div>
+  
+</html>

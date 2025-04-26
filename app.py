@@ -1,5 +1,4 @@
-#Imports and tools
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 import pyodbc
 import pandas as pd
 import os
@@ -259,7 +258,62 @@ def upload():
     return render_template('upload.html')
 
 
-#New routes here
+
+######################################## Dashboard ###############################################
+def query_db(query):
+    with pyodbc.connect(conn_str) as conn:
+        cursor = conn.cursor()
+        cursor.execute(query)
+        columns = [column[0] for column in cursor.description]
+        return [dict(zip(columns, row)) for row in cursor.fetchall()]
+
+@app.route("/api/spending_over_time")
+def spending_over_time():
+    query = """
+        SELECT YEAR, WEEK_NUM, SUM(SPEND) AS total_spend
+        FROM transactions
+        GROUP BY YEAR, WEEK_NUM
+        ORDER BY YEAR, WEEK_NUM;
+    """
+    return jsonify(query_db(query))
+
+@app.route("/api/top_departments")
+def top_departments():
+    query = """
+        SELECT p.DEPARTMENT, SUM(t.SPEND) AS total_spend
+        FROM transactions t
+        JOIN products p ON t.PRODUCT_NUM = p.PRODUCT_NUM
+        GROUP BY p.DEPARTMENT
+        ORDER BY total_spend DESC
+        OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY;
+    """
+    return jsonify(query_db(query))
+
+@app.route("/api/active_households")
+def active_households():
+    query = """
+        SELECT YEAR, WEEK_NUM, COUNT(DISTINCT HSHD_NUM) AS active_households
+        FROM transactions
+        GROUP BY YEAR, WEEK_NUM
+        ORDER BY YEAR, WEEK_NUM;
+    """
+    return jsonify(query_db(query))
+
+@app.route("/api/avg_spend_per_household")
+def avg_spend_per_household():
+    query = """
+        SELECT YEAR, WEEK_NUM, AVG(weekly_spend) AS avg_spend
+        FROM (
+            SELECT YEAR, WEEK_NUM, HSHD_NUM, SUM(SPEND) AS weekly_spend
+            FROM transactions
+            GROUP BY YEAR, WEEK_NUM, HSHD_NUM
+        ) AS household_weekly
+        GROUP BY YEAR, WEEK_NUM
+        ORDER BY YEAR, WEEK_NUM;
+    """
+    return jsonify(query_db(query))
+
+################################################################################################
 
 
 #Must be at the bottom
