@@ -183,8 +183,10 @@ def upload():
         table_primary_keys = {
             'Households': 'HSHD_NUM',
             'Products': 'PRODUCT_NUM',
-            'Transactions': None  # Assumes no primary key enforcement
+            'Transactions': None  # No primary key enforcement
         }
+
+        BATCH_SIZE = 500  # Tune this as needed
 
         for table in ['Transactions', 'Households', 'Products']:
             file = request.files.get(table.lower())
@@ -199,13 +201,11 @@ def upload():
                 else:
                     df = pd.read_excel(filepath)
 
-                # Clean up column names: strip whitespace and replace spaces with underscores
+                # Clean up column names
                 df.columns = df.columns.str.strip().str.replace(' ', '_')
 
-                # Debug: Print column names to verify they match what we expect
-                print(f"Columns in {table}: {df.columns.tolist()}")
+                print(f"Columns in {table}: {df.columns.tolist()}")  # Debug
 
-                # Convert 'L' column in Households from Y/N to 1/0
                 if table == 'Households' and 'L' in df.columns:
                     df['L'] = df['L'].map({'Y': 1, 'N': 0})
 
@@ -213,47 +213,53 @@ def upload():
                 cursor = conn.cursor()
 
                 primary_key = table_primary_keys[table]
-                inserted_count = 0
+                inserted_rows = []
                 updated_count = 0
+                inserted_count = 0
+
+                columns = df.columns.tolist()
+                placeholders = ', '.join(['?'] * len(columns))
+                insert_sql = f"INSERT INTO {table} ({', '.join(columns)}) VALUES ({placeholders})"
+
+                update_sql = None
+                if primary_key:
+                    set_clause = ', '.join([f"{col} = ?" for col in columns if col != primary_key])
+                    update_sql = f"UPDATE {table} SET {set_clause} WHERE {primary_key} = ?"
+
+                    # ⚡ Fetch all existing primary keys once
+                    cursor.execute(f"SELECT {primary_key} FROM {table}")
+                    existing_keys = set(row[0] for row in cursor.fetchall())
 
                 for _, row in df.iterrows():
                     data = tuple(row)
-                    columns = list(row.index)
 
                     if primary_key:
-                        if primary_key not in row:
-                            flash(f"Missing primary key '{primary_key}' in the uploaded data.")
-                            return redirect(url_for('upload'))
-
                         pk_value = row[primary_key]
-                        # Check if record exists
-                        cursor.execute(f"SELECT COUNT(*) FROM {table} WHERE {primary_key} = ?", pk_value)
-                        exists = cursor.fetchone()[0] > 0
-
-                        if exists:
-                            # Build update SQL
-                            set_clause = ', '.join([f"{col} = ?" for col in columns if col != primary_key])
+                        if pk_value in existing_keys:
+                            # Update
                             update_values = [row[col] for col in columns if col != primary_key]
                             update_values.append(pk_value)
-                            sql = f"UPDATE {table} SET {set_clause} WHERE {primary_key} = ?"
-                            cursor.execute(sql, update_values)
+                            cursor.execute(update_sql, update_values)
                             updated_count += 1
                         else:
-                            placeholders = ', '.join(['?'] * len(columns))
-                            sql = f"INSERT INTO {table} ({', '.join(columns)}) VALUES ({placeholders})"
-                            cursor.execute(sql, data)
-                            inserted_count += 1
+                            inserted_rows.append(data)
                     else:
-                        # No primary key — just insert
-                        placeholders = ', '.join(['?'] * len(columns))
-                        sql = f"INSERT INTO {table} ({', '.join(columns)}) VALUES ({placeholders})"
-                        cursor.execute(sql, data)
-                        inserted_count += 1
+                        inserted_rows.append(data)
+
+                    # When batch size is hit, bulk insert
+                    if len(inserted_rows) >= BATCH_SIZE:
+                        cursor.executemany(insert_sql, inserted_rows)
+                        inserted_count += len(inserted_rows)
+                        inserted_rows = []
+
+                # Insert any leftovers
+                if inserted_rows:
+                    cursor.executemany(insert_sql, inserted_rows)
+                    inserted_count += len(inserted_rows)
 
                 conn.commit()
                 conn.close()
 
-                # Remove files from upload
                 if os.path.exists(filepath):
                     os.remove(filepath)
 
@@ -262,6 +268,7 @@ def upload():
         return redirect(url_for('explore'))
 
     return render_template('upload.html')
+
 
 
 
