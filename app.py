@@ -273,9 +273,9 @@ def query_db(query):
         columns = [column[0] for column in cursor.description]
         return [dict(zip(columns, row)) for row in cursor.fetchall()]
     
-@app.route('/dashboard')
-def about():
-    return render_template('about.html')
+@app.route('/engagement')
+def engagement():
+    return render_template('dashboard.html')
 
 
 @app.route("/api/spending_over_time")
