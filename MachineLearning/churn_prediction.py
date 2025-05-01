@@ -24,7 +24,7 @@ def main():
 
     # Load data
     households_df = pd.read_sql("SELECT * FROM HOUSEHOLDS", conn)
-    transactions_df = pd.read_sql("SELECT * FROM TRANSACTIONS", conn)
+    transactions_df = pd.read_sql("SELECT TOP 20000 * FROM TRANSACTIONS", conn)
 
     
     conn.close()
