@@ -23,19 +23,10 @@ def main():
     conn = pyodbc.connect(conn_str)
 
     # Load data
-    #households_df = pd.read_sql("SELECT * FROM HOUSEHOLDS", conn)
-    #transactions_df = pd.read_sql("SELECT * FROM TRANSACTIONS", conn)
+    households_df = pd.read_sql("SELECT * FROM HOUSEHOLDS", conn)
+    transactions_df = pd.read_sql("SELECT * FROM TRANSACTIONS", conn)
 
-    # Load transactions in chunks to prevent memory crash
-    chunk_size = 5000
-    transactions_chunks = []
-    transactions_query = "SELECT * FROM TRANSACTIONS"
-
-    for chunk in pd.read_sql(transactions_query, conn, chunksize=chunk_size):
-        transactions_chunks.append(chunk)
-        if len(transactions_chunks) * chunk_size >= 200000:  # optional limit
-            break
-            
+    
     conn.close()
 
     transactions_df.columns = transactions_df.columns.str.strip().str.upper()
